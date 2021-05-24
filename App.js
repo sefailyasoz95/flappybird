@@ -1,7 +1,7 @@
 import { GameEngine } from "react-native-game-engine";
 import React, { useRef, useState } from "react";
 import Constants from "./Constants";
-import { StyleSheet, Text, View } from "react-native";
+import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Matter from "matter-js";
 import Bird from "./Components/Bird";
 import Wall from "./Components/Wall";
@@ -31,14 +31,19 @@ const App = () => {
       Constants.MAX_WIDTH / 4,
       Constants.MAX_HEIGHT / 2,
       50,
-      50
+      50,
+      {
+        friction: 0,
+        frictionAir: 0,
+        frictionStatic: 1,
+      }
     );
     let floor = Matter.Bodies.rectangle(
       Constants.MAX_WIDTH / 2,
       Constants.MAX_HEIGHT - 25,
       Constants.MAX_WIDTH,
       50,
-      { isStatic: true }
+      { isStatic: true, friction: 0, frictionAir: 0, frictionStatic: 1 }
     );
     let ceiling = Matter.Bodies.rectangle(
       Constants.MAX_WIDTH / 2,
@@ -83,11 +88,8 @@ const App = () => {
 
     Matter.Events.on(engine, "collisionStart", (event) => {
       let pairs = event.pairs;
-      console.log("pairs:", pairs);
-
-      engineRef.dispatch({ type: "game-over" });
+      engineRef.current.dispatch({ type: "game-over" });
     });
-
     return {
       physics: { engine: engine, world: world },
       bird: { body: bird, size: [50, 50], color: "red", renderer: Bird },
@@ -135,6 +137,10 @@ const App = () => {
       setRunning(false);
     }
   };
+  const reset = () => {
+    engineRef.current.swap(setupWorld());
+    setRunning(true);
+  };
   return (
     <View style={styles.container}>
       <GameEngine
@@ -145,6 +151,28 @@ const App = () => {
         running={running}
         entities={setupWorld()}
       />
+      {!running && (
+        <TouchableOpacity
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            opacity: 0.8,
+            backgroundColor: "black",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          onPress={reset}
+        >
+          <View>
+            <Text style={{ color: "white", fontWeight: "bold" }}>
+              Start Again
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
